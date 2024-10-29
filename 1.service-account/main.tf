@@ -39,3 +39,10 @@ provider "google" {
 # output "email_farra_sa" {
 #     value = google_service_account.farra_service_account.email
 # }
+
+#service account
+resource "google_service_account" "github-action" {
+  account_id   = "github-action"
+  display_name = "github-action"
+  disabled = false
+}
