@@ -60,3 +60,15 @@ provider "google" {
 #   role    = each.value
 #   member  = "user:mtaufiknelas@gmail.com"
 # }
+
+resource "google_project_iam_member" "iam1" {
+  project = local.project
+  role    = "roles/artifactregistry.admin"
+  member  = "serviceAccount:github-action@learn-with-farra.iam.gserviceaccount.com"
+}
+
+resource "google_project_iam_member" "iam2" {
+  project = local.project
+  role    = "roles/container.admin"
+  member  = "serviceAccount:github-action@learn-with-farra.iam.gserviceaccount.com"
+}
