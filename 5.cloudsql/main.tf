@@ -28,13 +28,15 @@ provider "google" {
   region  = local.region
 }
 
-resource "google_sql_database_instance" "prod" {
-  name             = "prod"
-  database_version = "MYSQL_8_0_31"
+resource "google_sql_database_instance" "prod-1" {
+  name                = "prod-1"
+  database_version    = "MYSQL_8_0_31"
+  deletion_protection = "false"
   settings {
     tier              = "db-custom-1-3840"
     disk_type         = "PD_HDD"
     availability_type = "ZONAL"
+    deletion_protection_enabled = "false"
     backup_configuration {
       start_time                     = "02:00"
       binary_log_enabled             = true
@@ -59,8 +61,8 @@ resource "google_sql_database_instance" "prod" {
     disk_autoresize = true
     disk_autoresize_limit = "0"
     maintenance_window {
-      # day = 0
-      # hour = 0
+      day = 1
+      hour = 1
       update_track = "canary"
     }
   }
