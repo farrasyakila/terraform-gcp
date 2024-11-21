@@ -14,7 +14,7 @@ terraform {
 
   backend "gcs" {
     bucket = "farra"
-    prefix = "learn-with-farra.registry-farra"
+    prefix = "learn-with-farra.firewall-farra"
   }
 }
 
@@ -28,13 +28,20 @@ provider "google" {
   region  = local.region
 }
 
-# resource "google_artifact_registry_repository" "docker-images" {
-#   cleanup_policy_dry_run = true
-#   location      = "asia-southeast2"
-#   repository_id = "docker-images"
-#   format        = "DOCKER"
 
-#   docker_config {
-#     immutable_tags = false 
-#   }
-# }
+resource "google_compute_firewall" "farra-firewall" {
+  project     = "learn-with-farra"
+  name        = "api"
+  network     = "vpc-farra"
+  priority    = 1000
+  direction   = "INGRESS"
+  description = "allow port 8080"
+
+  allow {
+    protocol  = "tcp"
+    ports     = ["8080"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+#   target_tags = ["airflow-prod"]
+}

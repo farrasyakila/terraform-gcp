@@ -50,149 +50,149 @@ resource "google_compute_subnetwork" "farra-subnet" {
 }
 
 
-resource "google_service_account" "gke-node" {
-  account_id   = "gke-node"
-  display_name = "gke-node"
-  description  = "used by gke node"
-}
+# resource "google_service_account" "gke-node" {
+#   account_id   = "gke-node"
+#   display_name = "gke-node"
+#   description  = "used by gke node"
+# }
 
-resource "google_project_iam_member" "gke-node" {
-  for_each = toset([
-    "roles/artifactregistry.reader",
-    "roles/container.nodeServiceAccount",
-  ])
+# resource "google_project_iam_member" "gke-node" {
+#   for_each = toset([
+#     "roles/artifactregistry.reader",
+#     "roles/container.nodeServiceAccount",
+#   ])
 
-  project = local.project
-  role    = each.value
-  member  = "serviceAccount:${google_service_account.gke-node.email}"
-}
+#   project = local.project
+#   role    = each.value
+#   member  = "serviceAccount:${google_service_account.gke-node.email}"
+# }
 
-resource "google_project_service" "container" {
-  project            = local.project
-  service            = "container.googleapis.com"
-  disable_on_destroy = false
-}
+# resource "google_project_service" "container" {
+#   project            = local.project
+#   service            = "container.googleapis.com"
+#   disable_on_destroy = false
+# }
 
-resource "google_container_cluster" "cluster" {
-  depends_on = [google_project_service.container, google_compute_subnetwork.farra-subnet]
-  deletion_protection = false
-  name = "default"
+# resource "google_container_cluster" "cluster" {
+#   depends_on = [google_project_service.container, google_compute_subnetwork.farra-subnet]
+#   deletion_protection = false
+#   name = "default"
   
 
 
-  # networking
+#   # networking
 
-  location   = local.region
-  network    = "vpc-farra"
-  subnetwork = "farra-subnet"
-  ip_allocation_policy {
-    cluster_secondary_range_name  = "pods" 
-    services_secondary_range_name = "services" 
-  }
-  default_snat_status {
-    disabled = true
-  }
+#   location   = local.region
+#   network    = "vpc-farra"
+#   subnetwork = "farra-subnet"
+#   ip_allocation_policy {
+#     cluster_secondary_range_name  = "pods" 
+#     services_secondary_range_name = "services" 
+#   }
+#   default_snat_status {
+#     disabled = true
+#   }
 
-  # gke feature
+#   # gke feature
 
-  enable_l4_ilb_subsetting    = true
-  enable_intranode_visibility = true
-  datapath_provider           = "ADVANCED_DATAPATH"
-  default_max_pods_per_node   = 32
-  workload_identity_config {
-    workload_pool = "${local.project}.svc.id.goog"
-  }
-  cluster_autoscaling {
-    autoscaling_profile = "OPTIMIZE_UTILIZATION"
-    # we don't use auto create of node pool, we manage our own node pools
-    enabled = false
-  }
-  dns_config {
-    cluster_dns       = "CLOUD_DNS"
-    cluster_dns_scope = "CLUSTER_SCOPE"
-  }
-  gateway_api_config {
-    channel = "CHANNEL_STANDARD"
-  }
-  node_pool_defaults {
-    node_config_defaults {
-      gcfs_config {
-        enabled = true
-      }
-    }
-  }
-  addons_config {
-    dns_cache_config {
-      enabled = true
-    }
-  }
-
-
-  # cluster upgrade
-
-  release_channel {
-    channel = "REGULAR"
-  }
-  maintenance_policy {
-    recurring_window {
-      recurrence = "FREQ=DAILY"
-      start_time = "2023-01-01T18:00:00Z"
-      end_time   = "2023-01-01T22:00:00Z"
-    }
-  }
+#   enable_l4_ilb_subsetting    = true
+#   enable_intranode_visibility = true
+#   datapath_provider           = "ADVANCED_DATAPATH"
+#   default_max_pods_per_node   = 32
+#   workload_identity_config {
+#     workload_pool = "${local.project}.svc.id.goog"
+#   }
+#   cluster_autoscaling {
+#     autoscaling_profile = "OPTIMIZE_UTILIZATION"
+#     # we don't use auto create of node pool, we manage our own node pools
+#     enabled = false
+#   }
+#   dns_config {
+#     cluster_dns       = "CLOUD_DNS"
+#     cluster_dns_scope = "CLUSTER_SCOPE"
+#   }
+#   gateway_api_config {
+#     channel = "CHANNEL_STANDARD"
+#   }
+#   node_pool_defaults {
+#     node_config_defaults {
+#       gcfs_config {
+#         enabled = true
+#       }
+#     }
+#   }
+#   addons_config {
+#     dns_cache_config {
+#       enabled = true
+#     }
+#   }
 
 
-  # initial nodes
+#   # cluster upgrade
 
-  initial_node_count       = 2
-  remove_default_node_pool = true
-  node_config {
-    disk_size_gb = 10
-    shielded_instance_config {
-      enable_secure_boot          = true
-      enable_integrity_monitoring = true
-    }
-  }
+#   release_channel {
+#     channel = "REGULAR"
+#   }
+#   maintenance_policy {
+#     recurring_window {
+#       recurrence = "FREQ=DAILY"
+#       start_time = "2023-01-01T18:00:00Z"
+#       end_time   = "2023-01-01T22:00:00Z"
+#     }
+#   }
 
 
-  lifecycle {
-    # as we using remove_default_node_pool
-    # the node_config will be invalid after cluster creation
-    ignore_changes = [node_config]
-  }
-}
+#   # initial nodes
 
-locals {
-  pools = [
-    "e2-standard-2"
-  ]
-}
+#   initial_node_count       = 2
+#   remove_default_node_pool = true
+#   node_config {
+#     disk_size_gb = 10
+#     shielded_instance_config {
+#       enable_secure_boot          = true
+#       enable_integrity_monitoring = true
+#     }
+#   }
 
-resource "google_container_node_pool" "pool" {
-  for_each = {
-    for p in local.pools : "${p}" => { machine_type = p }
-  }
 
-  name     = each.key
-  cluster  = google_container_cluster.cluster.name
-  location = google_container_cluster.cluster.location
+#   lifecycle {
+#     # as we using remove_default_node_pool
+#     # the node_config will be invalid after cluster creation
+#     ignore_changes = [node_config]
+#   }
+# }
 
-  autoscaling {
-    total_min_node_count = 0
-    total_max_node_count = 25
-  }
+# locals {
+#   pools = [
+#     "e2-standard-2"
+#   ]
+# }
 
-  node_config {
-    machine_type    = each.value.machine_type
-    service_account = google_service_account.gke-node.email
-    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
-    disk_type       = "pd-standard"
-    gvnic {
-      enabled = true
-    }
-    shielded_instance_config {
-      enable_secure_boot          = true
-      enable_integrity_monitoring = true
-    }
-  }
-}
+# resource "google_container_node_pool" "pool" {
+#   for_each = {
+#     for p in local.pools : "${p}" => { machine_type = p }
+#   }
+
+#   name     = each.key
+#   cluster  = google_container_cluster.cluster.name
+#   location = google_container_cluster.cluster.location
+
+#   autoscaling {
+#     total_min_node_count = 0
+#     total_max_node_count = 25
+#   }
+
+#   node_config {
+#     machine_type    = each.value.machine_type
+#     service_account = google_service_account.gke-node.email
+#     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+#     disk_type       = "pd-standard"
+#     gvnic {
+#       enabled = true
+#     }
+#     shielded_instance_config {
+#       enable_secure_boot          = true
+#       enable_integrity_monitoring = true
+#     }
+#   }
+# }

@@ -29,16 +29,16 @@ provider "google" {
   region = local.region
 }
 
-# #service account
-# resource "google_service_account" "farra_service_account" {
-#   account_id   = "farra-service-acc"
-#   display_name = "farra service acc"
-#   disabled = false
-# }
+#service account
+resource "google_service_account" "farra_service_account" {
+  account_id   = "farra-service-acc"
+  display_name = "farra service acc"
+  disabled = false
+}
 
-# output "email_farra_sa" {
-#     value = google_service_account.farra_service_account.email
-# }
+output "email_farra_sa" {
+    value = google_service_account.farra_service_account.email
+}
 
 #service account
 resource "google_service_account" "github-action" {

@@ -62,7 +62,8 @@ provider "google" {
 # #vm
 # resource "google_compute_instance" "farraa-vm" {
 #     name         = "farraa-vm"
-#     machine_type = "e2-micro"
+#     machine_type = "e2-standard-2"
+#     allow_stopping_for_update = true
 #     zone         = "asia-southeast2-b"
 #     boot_disk {
 #     auto_delete = true
@@ -89,26 +90,26 @@ provider "google" {
 # }
 
 
-#vm test
-resource "google_compute_instance" "test-vm" {
-    name         = "test-vm"
-    machine_type = "e2-micro"
-    zone         = "asia-southeast2-b"
-    boot_disk {
-    auto_delete = true
-    mode        = "READ_WRITE"
-    initialize_params {
-        image = "ubuntu-os-cloud/ubuntu-minimal-2204-jammy-v20230907"
-        size  = 10
-        type  = "pd-balanced"
-   }
- }
-    network_interface {
-        network    = "vpc-farra"
-        subnetwork = "farra-subnet"
-        access_config {}
- }
-    metadata = {
-        ssh-keys = "farra:${file("farra.pub")}"
-    }
-}
+# #vm test
+# resource "google_compute_instance" "test-vm" {
+#     name         = "test-vm"
+#     machine_type = "e2-micro"
+#     zone         = "asia-southeast2-b"
+#     boot_disk {
+#     auto_delete = true
+#     mode        = "READ_WRITE"
+#     initialize_params {
+#         image = "ubuntu-os-cloud/ubuntu-minimal-2204-jammy-v20230907"
+#         size  = 10
+#         type  = "pd-balanced"
+#    }
+#  }
+#     network_interface {
+#         network    = "vpc-farra"
+#         subnetwork = "farra-subnet"
+#         access_config {}
+#  }
+#     metadata = {
+#         ssh-keys = "farra:${file("farra.pub")}"
+#     }
+# }
